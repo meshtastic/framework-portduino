@@ -25,7 +25,12 @@ void yield(void) { sched_yield(); }
 
 long random(long max) { return random(0, max); }
 
-long random(long min, long max) { return rand() % (max - min) + min; }
+long random(long min, long max) { 
+  if (min >= max) {
+    return min;
+  }
+  return rand() % (max - min) + min; 
+}
 
 void randomSeed(unsigned long s) { srand(s); }
 
