@@ -2,71 +2,9 @@
 
 #include "linux/gpio/LinuxGPIOPin.h"
 #include <assert.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
 #include <dirent.h>
 
 const char *consumer = "portduino";
-
-static bool chip_is_gpiochip_device(const char *path) {
-  char *realname, *sysfsp, devpath[64];
-	struct stat statbuf;
-	bool ret = false;
-	int rv;
-
-	rv = lstat(path, &statbuf);
-	if (rv)
-		goto out;
-
-	/*
-	 * Is it a symbolic link? We have to resolve it before checking
-	 * the rest.
-	 */
-	realname = S_ISLNK(statbuf.st_mode) ? realpath(path, NULL) :
-					      strdup(path);
-	if (realname == NULL)
-		goto out;
-
-	rv = stat(realname, &statbuf);
-	if (rv)
-		goto out_free_realname;
-
-	/* Is it a character device? */
-	if (!S_ISCHR(statbuf.st_mode)) {
-		errno = ENOTTY;
-		goto out_free_realname;
-	}
-
-	/* Is the device associated with the GPIO subsystem? */
-	snprintf(devpath, sizeof(devpath), "/sys/dev/char/%u:%u/subsystem",
-		 major(statbuf.st_rdev), minor(statbuf.st_rdev));
-
-	sysfsp = realpath(devpath, NULL);
-	if (!sysfsp)
-		goto out_free_realname;
-
-	/*
-	 * In glibc, if any of the underlying readlink() calls fail (which is
-	 * perfectly normal when resolving paths), errno is not cleared.
-	 */
-	errno = 0;
-
-	if (strcmp(sysfsp, "/sys/bus/gpio") != 0) {
-		/* This is a character device but not the one we're after. */
-		errno = ENODEV;
-		goto out_free_sysfsp;
-	}
-
-	ret = true;
-
-out_free_sysfsp:
-	free(sysfsp);
-out_free_realname:
-	free(realname);
-out:
-	errno = 0;
-	return ret;
-}
 
 static int chip_dir_filter(const struct dirent *entry)
 {
@@ -78,7 +16,8 @@ static int chip_dir_filter(const struct dirent *entry)
 	if (ret < 0)
 		return 0;
 
-	is_chip = chip_is_gpiochip_device(path);
+	// is_chip = gpiod_is_gpiochip_device(path);
+  is_chip = true;
 	free(path);
 	return !!is_chip;
 }
@@ -104,33 +43,24 @@ static struct gpiod_chip *chip_open_by_name(const char *name)
  */
 static gpiod_line *getLine(const char *chipLabel, const char *linuxPinName) {
 
-  struct dirent **entries;
-  int num_chips = scandir("/dev/", &entries, chip_dir_filter, alphasort);
-  assert(num_chips > 0); // FIXME, throw exception
 	struct gpiod_chip *chip;
 
   log(SysGPIO, LogDebug, "getLine(%s, %s)", chipLabel, linuxPinName);
-  for (int i = 0; i < num_chips; i++) {
-    chip = chip_open_by_name(entries[i]->d_name);
-    if (!chip) {
-      if (errno == EACCES)
-        continue; // skip chips we don't have access to
+  chip = chip_open_by_name(chipLabel);
+  if (!chip) {
+    assert(0); // die_perror("unable to open %s", entries[i]->d_name);
+  } else {
+    auto label = gpiod_chip_label(chip);
+    log(SysGPIO, LogDebug, "Labels %s, %s", label, chipLabel);
 
-      assert(0); // die_perror("unable to open %s", entries[i]->d_name);
-    } else {
-      auto label = gpiod_chip_label(chip);
-      if (strcmp(label, chipLabel) == 0) {
-        auto line = gpiod_chip_find_line(chip, linuxPinName);
+    auto line = gpiod_chip_find_line(chip, linuxPinName);
 
-        struct gpiod_line_request_config request = {
-            consumer, GPIOD_LINE_REQUEST_DIRECTION_AS_IS, 0};
-        auto result = gpiod_line_request(line, &request, 0);
-        assert(result == 0); // fixme throw
-        return line;
-      }
-    }
+    struct gpiod_line_request_config request = {
+        consumer, GPIOD_LINE_REQUEST_DIRECTION_AS_IS, 0};
+    auto result = gpiod_line_request(line, &request, 0);
+    assert(result == 0); // fixme throw
+    return line;
   }
-  assert(0); // FIXME throw
 }
 
 /**
