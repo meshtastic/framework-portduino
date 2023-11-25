@@ -6,22 +6,6 @@
 
 const char *consumer = "portduino";
 
-static int chip_dir_filter(const struct dirent *entry)
-{
-	bool is_chip;
-	char *path;
-	int ret;
-
-	ret = asprintf(&path, "/dev/%s", entry->d_name);
-	if (ret < 0)
-		return 0;
-
-	// is_chip = gpiod_is_gpiochip_device(path);
-  is_chip = true;
-	free(path);
-	return !!is_chip;
-}
-
 static struct gpiod_chip *chip_open_by_name(const char *name)
 {
 	struct gpiod_chip *chip;
