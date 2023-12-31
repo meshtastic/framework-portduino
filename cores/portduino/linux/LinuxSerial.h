@@ -10,7 +10,7 @@
 
 namespace arduino {
     class LinuxSerial : public HardwareSerial {
-        int serial_port;
+        int serial_port = -1;
         std::string path;
     public:
         virtual void begin(unsigned long baudrate) { begin(baudrate, SERIAL_8N1 ); }
