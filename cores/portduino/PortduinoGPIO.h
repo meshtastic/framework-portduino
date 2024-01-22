@@ -163,7 +163,8 @@ private:
             (s == FALLING && oldState && !newState) ||
             (s == CHANGE && !!oldState != !!newState))
         {
-            log(SysGPIO, LogDebug, "GPIOPin::callISR(%s, %d)", getName(), getPinNum());
+            if(!silent)
+                log(SysGPIO, LogDebug, "GPIOPin::callISR(%s, %d)", getName(), getPinNum());
             assert(isr);
             isr();
         }
