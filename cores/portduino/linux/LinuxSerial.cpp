@@ -64,7 +64,11 @@ namespace arduino {
 
     int LinuxSerial::available(void) {
         int bytes;
-        ioctl(serial_port, FIONREAD, &bytes);
+        int ret = ioctl(serial_port, FIONREAD, &bytes);
+        if (ret == -1) {
+            // ioctl failed, likely due to calling available on an invalid file descriptor (EBADF)
+            return 0;
+        }
         return bytes;
     }
 
