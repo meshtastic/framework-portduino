@@ -45,8 +45,121 @@ namespace arduino {
         tty.c_cc[VTIME] = 0;    // don't wait
         tty.c_cc[VMIN] = 0;
 
-        cfsetispeed(&tty, baudrate);
-        cfsetospeed(&tty, baudrate);
+        speed_t speed;
+        switch(baudrate)
+        {
+#ifdef B1200
+            case 1200:
+                speed = B1200;
+                break;
+#endif
+#ifdef B2400
+            case 2400:
+                speed = B2400;
+                break;
+#endif
+#ifdef B4800
+            case 4800:
+                speed = B4800;
+                break;
+#endif
+#ifdef B9600
+            case 9600:
+                speed = B9600;
+                break;
+#endif
+#ifdef B19200
+            case 19200:
+                speed = B19200;
+                break;
+#endif
+#ifdef B38400
+            case 38400:
+                speed = B38400;
+                break;
+#endif
+#ifdef B57600
+            case 57600:
+                speed = B57600;
+                break;
+#endif
+#ifdef B115200
+            case 115200:
+                speed = B115200;
+                break;
+#endif
+#ifdef B230400
+            case 230400:
+                speed = B230400;
+                break;
+#endif
+#ifdef B460800
+            case 460800:
+                speed = B460800;
+                break;
+#endif
+#ifdef B500000
+            case 500000:
+                speed = B500000;
+                break;
+#endif
+#ifdef B576000
+            case 576000:
+                speed = B576000;
+                break;
+#endif
+#ifdef B921600
+            case 921600:
+                speed = B921600;
+                break;
+#endif
+#ifdef B1000000
+            case 1000000:
+                speed = B1000000;
+                break;
+#endif
+#ifdef B1152000
+            case 1152000:
+                speed = B1152000;
+                break;
+#endif
+#ifdef B1500000
+            case 1500000:
+                speed = B1500000;
+                break;
+#endif
+#ifdef B2000000
+            case 2000000:
+                speed = B2000000;
+                break;
+#endif
+#ifdef B2500000
+            case 2500000:
+                speed = B2500000;
+                break;
+#endif
+#ifdef B3000000
+            case 3000000:
+                speed = B3000000;
+                break;
+#endif
+#ifdef B3500000
+            case 3500000:
+                speed = B3500000;
+                break;
+#endif
+#ifdef B4000000
+            case 4000000:
+                speed = B4000000;
+                break;
+#endif
+            default:
+                speed = baudrate;
+                break;
+        }
+
+        cfsetispeed(&tty, speed);
+        cfsetospeed(&tty, speed);
         tcsetattr(serial_port, TCSANOW, &tty);
 
     }
@@ -92,7 +205,7 @@ namespace arduino {
 
     LinuxSerial::operator bool() {
         // Returns true if the port is ready for use
-        return true;
+        return serial_port != -1;
     }
 
 
