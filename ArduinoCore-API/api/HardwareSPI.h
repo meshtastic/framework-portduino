@@ -21,6 +21,7 @@
 #include "Common.h"
 #include <inttypes.h>
 #include "Stream.h"
+#include "SPIChip.h"
 
 #define SPI_HAS_TRANSACTION
 
@@ -122,6 +123,8 @@ class HardwareSPI
     virtual void begin(const char *name);
 
     virtual void end();
+  private:
+    SPIChip *spiChip;
 };
 
 // Alias SPIClass to HardwareSPI since it's already the defacto standard for SPI classe name

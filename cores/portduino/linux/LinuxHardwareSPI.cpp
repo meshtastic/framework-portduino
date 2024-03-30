@@ -76,9 +76,6 @@ public:
 };
 #endif
 
-// FIXME, this is kinda skanky, but for now we assume one SPI device
-SPIChip *spiChip;
-
 namespace arduino {
 
 uint8_t HardwareSPI::transfer(uint8_t data) {

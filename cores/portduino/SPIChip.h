@@ -1,4 +1,6 @@
 #include "HardwareSPI.h"
+#ifndef SPIChip_DEFINED
+#define SPIChip_DEFINED
 
 class SPIChip 
 {
@@ -38,5 +40,4 @@ public:
     virtual const bool isSimulated() { return true; }    
 };
 
-// FIXME, this is kinda skanky, but for now we assume one SPI device
-extern SPIChip *spiChip;
+#endif
