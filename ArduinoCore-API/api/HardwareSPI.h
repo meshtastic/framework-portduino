@@ -123,7 +123,7 @@ class HardwareSPI
     virtual void begin(const char *name);
 
     virtual void end();
-  private:
+  protected:
     SPIChip *spiChip;
 };
 
