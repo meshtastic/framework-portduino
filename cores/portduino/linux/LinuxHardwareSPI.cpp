@@ -58,6 +58,7 @@ public:
 
     xfer.rx_buf = (unsigned long)inBuf; // Could be NULL, to ignore RX bytes
     xfer.cs_change = deassertCS;
+    xfer.delay_usecs = 100;
 
     int status = ioctl(SPI_IOC_MESSAGE(1), &xfer);
     if (status < 0) {
@@ -100,6 +101,10 @@ void HardwareSPI::transfer(void *buf, size_t count) {
   spiChip->transfer((uint8_t *) buf, (uint8_t *) buf, count);
 }
 
+void HardwareSPI::transfer(void *out, void *in, size_t count) {
+  spiChip->transfer((uint8_t *) out, (uint8_t *) in, count);
+}
+
 // Transaction Functions
 void HardwareSPI::usingInterrupt(int interruptNumber) {
   // Do nothing
@@ -112,6 +117,7 @@ void HardwareSPI::notUsingInterrupt(int interruptNumber) {
 void HardwareSPI::beginTransaction(SPISettings settings) {
   // Do nothing
   // printf("beginTransaction\n");
+  spiChip->transfer(NULL, NULL, 0, false); // turn on chip select
   assert(settings.bitOrder == MSBFIRST); // we don't support changing yet
   assert(settings.dataMode == SPI_MODE0);
 }
@@ -120,7 +126,7 @@ void HardwareSPI::endTransaction(void) {
   assert(spiChip);
 
   // FIXME - for the time being I'm not using automatic ship select management
-  // spiChip->transfer(NULL, NULL, 0, true); // turn off chip select
+  spiChip->transfer(NULL, NULL, 0, true); // turn off chip select
 
   // printf("endTransaction\n");
 }

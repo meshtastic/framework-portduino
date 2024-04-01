@@ -108,6 +108,7 @@ class HardwareSPI
     virtual uint8_t transfer(uint8_t data);
     virtual uint16_t transfer16(uint16_t data);
     virtual void transfer(void *buf, size_t count);
+    virtual void transfer(void *out, void *in, size_t count);
 
     // Transaction Functions
     virtual void usingInterrupt(int interruptNumber);
