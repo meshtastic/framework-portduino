@@ -67,6 +67,8 @@ public:
     return 0;
   }
 
+  virtual size_t readBytes( char *buffer, size_t length);
+
   virtual int peek() {
     notImplemented("i2cpeek");
     return -1;

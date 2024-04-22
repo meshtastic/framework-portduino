@@ -17,7 +17,7 @@
 */
 
 #pragma once
-
+#define TwoWire_h
 #include <inttypes.h>
 #include "Stream.h"
 

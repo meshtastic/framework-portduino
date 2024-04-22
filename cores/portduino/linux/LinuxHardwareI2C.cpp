@@ -57,9 +57,22 @@ namespace arduino {
     }
 
     int LinuxHardwareI2C::read() {
-        if (::read(i2c_file, buf, 1) == -1)
+        int tmpBuf = 0;
+        if (::read(i2c_file, &tmpBuf, 1) == -1)
             return -1;
-        return buf[0];
+        return tmpBuf;
+    }
+
+    size_t LinuxHardwareI2C::readBytes(char *buffer, size_t length) {
+        int bytes_read = 0;
+
+        if (length == 0) {
+            return length;
+        } else {
+            bytes_read = ::read(i2c_file, buffer, length);
+            if ( bytes_read < 0) bytes_read = 0;
+        }
+        return bytes_read;
     }
 
     int LinuxHardwareI2C::available() {
