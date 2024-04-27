@@ -207,7 +207,7 @@ public:
     SimGPIOPin(pin_size_t n, String _name) : GPIOPin(n, _name) {}
 };
 
-void gpioInit();
+void gpioInit(int _num_gpios = 64);
 void gpioIdle();
 
 /// Assign an implementation to a specific pin

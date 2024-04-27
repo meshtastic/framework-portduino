@@ -10,20 +10,22 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <vector>
 
 // #include "linux/gpio/classic/GPIOChip.h"
 
-#define NUM_GPIOS 64
+int NUM_GPIOS;
 
 bool realHardware = false;
 
-static GPIOPinIf *pins[NUM_GPIOS];
+std::vector<GPIOPinIf*> pins;
 
 
 /** By default we assign simulated GPIOs to all pins, later applications can customize this in portduinoSetup */
-void gpioInit() {
+void gpioInit(int _num_gpios) {
+  NUM_GPIOS = _num_gpios;
   for(size_t i = 0; i < NUM_GPIOS; i++)
-    pins[i] = new SimGPIOPin(i, "Unbound");
+    pins.push_back( new SimGPIOPin(i, "Unbound"));
 }
 
 void gpioIdle() {
