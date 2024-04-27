@@ -14,6 +14,10 @@
 #include "linux/PosixFile.h"
 #include <linux/spi/spidev.h>
 #include <mutex>
+#include <map>
+#include <memory>
+
+
 
 class LinuxSPIChip : public SPIChip, private PosixFile {
   private:
@@ -72,6 +76,7 @@ class LinuxSPIChip : public SPIChip, private PosixFile {
       assert (ioctl(SPI_IOC_WR_MAX_SPEED_HZ, &defaultSpeed) >= 0);
     }
 };
+std::map<std::string, std::shared_ptr<void>> SPI_map;
 #endif
 
 namespace arduino {
@@ -135,32 +140,31 @@ void HardwareSPI::detachInterrupt() {
 void HardwareSPI::begin(const char *name, uint32_t freq) {
   // We only do this init once per boot
   if (!spiChip) {
+    if (SPI_map[name] != nullptr) {
+      spiChip = std::static_pointer_cast<SPIChip>(SPI_map[name]);
+    }
 
 #ifdef PORTDUINO_LINUX_HARDWARE
     // FIXME, only install the following on linux and only if we see that the
     // device exists in the filesystem
     try {
-      spiChip = new LinuxSPIChip(name, freq);
+      spiChip = std::make_shared<LinuxSPIChip>(name, freq);
+      SPI_map[name] = spiChip;
+
     } catch (...) {
       printf("No hardware spi chip found...\n");
     }
 #endif
 
     if (!spiChip) // no hw spi found, use the simulator
-      spiChip = new SimSPIChip();
+      spiChip = std::make_shared<SimSPIChip>();
   }
 }
 
 void HardwareSPI::end() {
   if (spiChip) {
-#ifdef PORTDUINO_LINUX_HARDWARE
-    if (!spiChip->isSimulated())
-      delete (LinuxSPIChip*)spiChip;
-    else
-      delete spiChip;
-#else
-      delete spiChip;
-#endif
+      spiChip.reset();
+
   }
   spiChip = NULL;
 }

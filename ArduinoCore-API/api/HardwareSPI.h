@@ -22,6 +22,7 @@
 #include <inttypes.h>
 #include "Stream.h"
 #include "SPIChip.h"
+#include <memory>
 
 #define SPI_HAS_TRANSACTION
 
@@ -126,7 +127,7 @@ class HardwareSPI
 
     virtual void end();
   protected:
-    SPIChip *spiChip = nullptr;
+    std::shared_ptr <SPIChip> spiChip = nullptr;
 };
 
 // Alias SPIClass to HardwareSPI since it's already the defacto standard for SPI classe name
