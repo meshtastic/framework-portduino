@@ -81,6 +81,14 @@ std::map<std::string, std::shared_ptr<void>> SPI_map;
 
 namespace arduino {
 
+HardwareSPI::HardwareSPI(int8_t _spi_host) {
+  char x = (_spi_host & (1 << 4) - 1) + '0';
+  char y = (_spi_host >> 4) + '0';
+  spiString = "/dev/spidev";
+  spiString += x;
+  spiString += ".";
+  spiString += y;
+}
 uint8_t HardwareSPI::transfer(uint8_t data) {
   uint8_t response;
   assert(spiChip);
@@ -137,19 +145,19 @@ void HardwareSPI::detachInterrupt() {
   // Do nothing
 }
 
-void HardwareSPI::begin(const char *name, uint32_t freq) {
-  // We only do this init once per boot
+void HardwareSPI::begin(uint32_t freq) {
+
   if (!spiChip) {
-    if (SPI_map[name] != nullptr) {
-      spiChip = std::static_pointer_cast<SPIChip>(SPI_map[name]);
+    if (SPI_map[spiString] != nullptr) {
+      spiChip = std::static_pointer_cast<SPIChip>(SPI_map[spiString]);
     }
 
 #ifdef PORTDUINO_LINUX_HARDWARE
     // FIXME, only install the following on linux and only if we see that the
     // device exists in the filesystem
     try {
-      spiChip = std::make_shared<LinuxSPIChip>(name, freq);
-      SPI_map[name] = spiChip;
+      spiChip = std::make_shared<LinuxSPIChip>(spiString.c_str(), freq);
+      SPI_map[spiString] = spiChip;
 
     } catch (...) {
       printf("No hardware spi chip found...\n");
@@ -159,6 +167,12 @@ void HardwareSPI::begin(const char *name, uint32_t freq) {
     if (!spiChip) // no hw spi found, use the simulator
       spiChip = std::make_shared<SimSPIChip>();
   }
+}
+
+void HardwareSPI::begin(const char *name, uint32_t freq) {
+  if (name != nullptr)
+    spiString = std::string(name);
+  begin(freq);
 }
 
 void HardwareSPI::end() {

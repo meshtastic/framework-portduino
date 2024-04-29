@@ -23,6 +23,7 @@
 #include "Stream.h"
 #include "SPIChip.h"
 #include <memory>
+#include <string>
 
 #define SPI_HAS_TRANSACTION
 
@@ -106,6 +107,7 @@ const SPISettings DEFAULT_SPI_SETTINGS = SPISettings();
 class HardwareSPI
 {
   public:
+    HardwareSPI (int8_t _spi_host = 0);
     virtual uint8_t transfer(uint8_t data);
     virtual uint16_t transfer16(uint16_t data);
     virtual void transfer(void *buf, size_t count);
@@ -121,13 +123,14 @@ class HardwareSPI
     virtual void attachInterrupt();
     virtual void detachInterrupt();
 
-    virtual void begin() {begin("/dev/spidev0.0");};
+    virtual void begin(uint32_t freq = 2000000);
     virtual void begin(const char *name, uint32_t freq = 2000000);
     //uint32_t defaultSpeed;
 
     virtual void end();
   protected:
     std::shared_ptr <SPIChip> spiChip = nullptr;
+    std::string spiString;
 };
 
 // Alias SPIClass to HardwareSPI since it's already the defacto standard for SPI classe name
