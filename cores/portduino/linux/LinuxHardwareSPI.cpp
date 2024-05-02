@@ -150,7 +150,7 @@ void HardwareSPI::begin(uint32_t freq) {
   if (!spiChip) {
     if (SPI_map[spiString] != nullptr) {
       spiChip = std::static_pointer_cast<SPIChip>(SPI_map[spiString]);
-    }
+    } else {
 
 #ifdef PORTDUINO_LINUX_HARDWARE
     // FIXME, only install the following on linux and only if we see that the
@@ -163,7 +163,7 @@ void HardwareSPI::begin(uint32_t freq) {
       printf("No hardware spi chip found...\n");
     }
 #endif
-
+    }
     if (!spiChip) // no hw spi found, use the simulator
       spiChip = std::make_shared<SimSPIChip>();
   }
