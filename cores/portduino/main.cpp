@@ -8,6 +8,9 @@
 #include <sys/ioctl.h>
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/hci.h>
+#include <cerrno>
+#include <iostream>
+#include <cstring>
 
 #ifdef USE_X11
 #include <thread>
@@ -154,7 +157,10 @@ void portduinoAddArguments(const struct argp_child &child,
 }
 
 void reboot() {
-  execv(progArgv[0], progArgv);
+  int err = execv(progArgv[0], progArgv);
+  printf("execv() returned %i!\n", err);
+  std::cout << "error: " << std::strerror(errno) << '\n';
+  exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[]) {
