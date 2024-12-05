@@ -6,8 +6,6 @@
 #include <ftw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <bluetooth/bluetooth.h>
-#include <bluetooth/hci.h>
 #include <cerrno>
 #include <iostream>
 #include <cstring>
@@ -47,14 +45,11 @@ static char args_doc[] = "...";
 static struct argp_option options[] = {
     {"erase", 'e', 0, 0, "Erase virtual filesystem before use"},
     {"fsdir", 'd', "DIR", 0, "The directory to use as the virtual filesystem"},
-    {"hwid", 'h', "HWID", 0,
-     "The mac address to assign to this virtual machine"},
     {0}};
 
 struct TopArguments {
   bool erase;
   char *fsDir;
-  uint32_t hwId;
 };
 
 // In bss (inited to zero)
@@ -77,50 +72,12 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   case 'd':
     args->fsDir = arg;
     break;
-  case 'h':
-    if (sscanf(arg, "%d", &args->hwId) < 1)
-      return ARGP_ERR_UNKNOWN;
-    break;
   case ARGP_KEY_ARG:
     return 0;
   default:
     return ARGP_ERR_UNKNOWN;
   }
   return 0;
-}
-
-void _getMacAddr(uint8_t *dmac) {
-
-  dmac[0] = 0x80;
-  dmac[1] = 0;
-  dmac[2] = portduinoArguments.hwId >> 24;
-  dmac[3] = portduinoArguments.hwId >> 16;
-  dmac[4] = portduinoArguments.hwId >> 8;
-  dmac[5] = portduinoArguments.hwId & 0xff;
-
-  if (portduinoArguments.hwId != 1) { // If this was actually set
-    return;
-  }
-  struct hci_dev_info di;
-  di.dev_id = 0;
-  bdaddr_t bdaddr;
-  char addr[18];
-  int btsock;
-  btsock = socket(AF_BLUETOOTH, SOCK_RAW, 1);
-  if (btsock < 0) { // If anything fails, just return with the default value
-    return;
-  }
-
-  if (ioctl(btsock, HCIGETDEVINFO, (void *) &di)) {
-    return;
-  }
-
-  dmac[0] = di.bdaddr.b[5];
-  dmac[1] = di.bdaddr.b[4];
-  dmac[2] = di.bdaddr.b[3];
-  dmac[3] = di.bdaddr.b[2];
-  dmac[4] = di.bdaddr.b[1];
-  dmac[5] = di.bdaddr.b[0];
 }
 
 /*
@@ -179,8 +136,6 @@ int main(int argc, char *argv[]) {
 
   auto *args = &portduinoArguments;
 
-  args->hwId = 1;
-
   auto parseResult = argp_parse(&argp, argc, argv, 0, 0, args);
   if (parseResult == 0) {
     String fsRoot;
@@ -199,8 +154,7 @@ int main(int argc, char *argv[]) {
     } else
       fsRoot += args->fsDir;
 
-    printf("Portduino is starting, HWID=%d, VFS root at %s\n", args->hwId,
-           fsRoot.c_str());
+    printf("Portduino is starting, VFS root at %s\n", fsRoot.c_str());
 
     int status = mkdir(fsRoot.c_str(), 0700);
     if (status != 0 && errno == EEXIST && args->erase) {
