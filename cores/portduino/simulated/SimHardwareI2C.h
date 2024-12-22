@@ -22,6 +22,7 @@ enum ResultI2c {
 class SimHardwareI2C : public HardwareI2C {
 public:
   virtual void begin() NOT_IMPLEMENTED("i2cbegin");
+  virtual int writeQuick(uint8_t toWrite) NOT_IMPLEMENTED("writeQuick");
 
   virtual void begin(uint8_t address) NOT_IMPLEMENTED("i2cslave begin");
 

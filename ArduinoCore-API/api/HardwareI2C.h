@@ -41,6 +41,8 @@ class HardwareI2C : public Stream
 
     virtual void onReceive(void(*)(int)) = 0;
     virtual void onRequest(void(*)(void)) = 0;
+
+    virtual int writeQuick(uint8_t toWrite) = 0;
 };
 
 }

@@ -9,6 +9,14 @@
 #include <iostream>
 #include <linux/i2c.h>
 
+
+extern "C"
+{
+    #include<linux/i2c-dev.h>
+    #include <i2c/smbus.h>
+}
+
+
 namespace arduino {
     char buf[100] = {0};
     int requestedBytes = 0;
@@ -46,6 +54,10 @@ namespace arduino {
 
     }
 
+    int LinuxHardwareI2C::writeQuick(uint8_t toWrite) {
+        int a = i2c_smbus_write_quick(i2c_file, toWrite);
+        return a;
+    }
 
     size_t LinuxHardwareI2C::write(uint8_t toWrite) {
         buf[requestedBytes] = toWrite; // todo: alloc and copy

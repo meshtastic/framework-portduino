@@ -53,6 +53,8 @@ public:
   // Methods from Print
 
   virtual size_t write(uint8_t toWrite);
+  
+  int writeQuick(uint8_t toWrite);
 
   virtual size_t write(const uint8_t *buffer, size_t size);
 
