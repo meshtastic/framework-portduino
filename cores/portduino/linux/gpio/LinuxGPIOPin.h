@@ -29,6 +29,9 @@ class LinuxGPIOPin : public GPIOPin {
   /// Our GPIO line
   struct gpiod_line *line;
 
+  /// Chip structure associated with the line
+  struct gpiod_chip *chip;
+
 public:
 
   /**

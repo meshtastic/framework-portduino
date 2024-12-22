@@ -18,14 +18,15 @@ int NUM_GPIOS;
 
 bool realHardware = false;
 
-std::vector<GPIOPinIf*> pins;
+std::vector<std::unique_ptr<GPIOPinIf>> pins;
 
+GPIOPinIf::~GPIOPinIf() {}
 
 /** By default we assign simulated GPIOs to all pins, later applications can customize this in portduinoSetup */
 void gpioInit(int _num_gpios) {
   NUM_GPIOS = _num_gpios;
   for(size_t i = 0; i < NUM_GPIOS; i++)
-    pins.push_back( new SimGPIOPin(i, "Unbound"));
+    pins.push_back(std::make_unique<SimGPIOPin>(i, "Unbound"));
 }
 
 void gpioIdle() {
@@ -35,9 +36,9 @@ void gpioIdle() {
 }
 
 void gpioBind(GPIOPinIf *p) {
-    assert(p->getPinNum() < NUM_GPIOS);
-    pins[p->getPinNum()] = p;
-    realHardware = true;
+  assert(p->getPinNum() < NUM_GPIOS);
+  pins[p->getPinNum()].reset(p);
+  realHardware = true;
 }
 
 /**
@@ -45,10 +46,7 @@ void gpioBind(GPIOPinIf *p) {
 GPIOPinIf *getGPIO(pin_size_t n)
 {
   assert(n < NUM_GPIOS);
-  auto p = pins[n];
-
-  assert(p);
-  return p;
+  return pins[n].get();
 }
 
 void pinMode(pin_size_t pinNumber, PinMode pinMode)

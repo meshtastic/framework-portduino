@@ -15,6 +15,7 @@
 class GPIOPinIf
 {
 public:
+    virtual ~GPIOPinIf() = 0;
     virtual pin_size_t getPinNum() const = 0;
 
     /** Called to read from a pin and if the pin has changed state possibly call an ISR, also changes

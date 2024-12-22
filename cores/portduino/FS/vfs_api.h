@@ -19,7 +19,7 @@
 #include "FSImpl.h"
 
 extern "C" {
-#include <sys/unistd.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <dirent.h>
 }

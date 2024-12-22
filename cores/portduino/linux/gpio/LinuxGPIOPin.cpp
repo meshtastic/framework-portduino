@@ -104,7 +104,6 @@ static struct gpiod_chip *chip_open_by_name(const char *name)
  * Try to find the specified linux gpio line, throw exception if not found
  */
 gpiod_line *LinuxGPIOPin::getLine(const char *chipLabel, const char *linuxPinName) {
-	struct gpiod_chip *chip;
 	std::string path = "/dev/";
 	path += chipLabel;
   if (access(path.c_str(), R_OK) == 0) {
@@ -181,7 +180,6 @@ gpiod_line *LinuxGPIOPin::getLine(const char *chipLabel, const char *linuxPinNam
  * Try to find the specified linux gpio line, throw exception if not found
  */
 gpiod_line *LinuxGPIOPin::getLine(const char *chipLabel, const int linuxPinNum) {
-	struct gpiod_chip *chip;
 	std::string path = "/dev/";
 	path += chipLabel;
   if (access(path.c_str(), R_OK) == 0) {
@@ -224,7 +222,7 @@ gpiod_line *LinuxGPIOPin::getLine(const char *chipLabel, const int linuxPinNum) 
   struct dirent **entries;
   int num_chips = scandir("/dev/", &entries, chip_dir_filter, alphasort);
   assert(num_chips > 0); // FIXME, throw exception
-  log(SysGPIO, LogDebug, "getLine(%s, %s)", chipLabel, linuxPinNum);
+  log(SysGPIO, LogDebug, "getLine(%s, %d)", chipLabel, linuxPinNum);
   for (int i = 0; i < num_chips; i++) {
     chip = chip_open_by_name(entries[i]->d_name);
     if (!chip) {
@@ -270,7 +268,7 @@ LinuxGPIOPin::LinuxGPIOPin(pin_size_t n, const char *chipLabel,
 
 LinuxGPIOPin::~LinuxGPIOPin() { 
     gpiod_line_release(line); 
-    // FIXME must call gpiod_chip_unref(chip);
+    gpiod_chip_close(chip);
 }
 
 /// Read the low level hardware for this pin
