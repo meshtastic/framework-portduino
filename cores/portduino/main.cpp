@@ -113,6 +113,14 @@ void portduinoAddArguments(const struct argp_child &child,
   childArguments = _childArguments;
 }
 
+/**
+ * call from portduinoSetup() if you want to specify a custom filesystem root
+ */
+static const char* portduinoCustomfsRoot = nullptr;
+void portduinoCustomFSDir(const char *newFsRoot) {
+  portduinoCustomfsRoot = newFsRoot;
+}
+
 void reboot() {
   int err = execv(progArgv[0], progArgv);
   printf("execv() returned %i!\n", err);
@@ -141,18 +149,23 @@ int main(int argc, char *argv[]) {
     String fsRoot;
 
     if (!args->fsDir) {
-      // create a default dir
+      if(portduinoCustomfsRoot) {
+        fsRoot = portduinoCustomfsRoot;
+      } else {
+        // create a default dir
 
-      const char *homeDir = getenv("HOME");
-      assert(homeDir);
+        const char *homeDir = getenv("HOME");
+        assert(homeDir);
 
-      fsRoot += homeDir + String("/.portduino");
-      mkdir(fsRoot.c_str(), 0700);
+        fsRoot += homeDir + String("/.portduino");
+        mkdir(fsRoot.c_str(), 0700);
 
-      const char *instanceName = "default";
-      fsRoot += "/" + String(instanceName);
-    } else
+        const char *instanceName = "default";
+        fsRoot += "/" + String(instanceName);
+      }
+    } else {
       fsRoot += args->fsDir;
+    }
 
     printf("Portduino is starting, VFS root at %s\n", fsRoot.c_str());
 
