@@ -65,7 +65,7 @@ bool AsyncUDP::listenMulticast(const IPAddress addr, uint16_t port, uint8_t ttl)
     addr_str[maxIpLength] = '\0';
     struct sockaddr uvAddr;
     uv_ip4_addr(addr_str, port, (struct sockaddr_in *)&uvAddr);
-    if (uv_udp_bind(&_socket, (const struct sockaddr *)&uvAddr, 0) < 0) {
+    if (uv_udp_bind(&_socket, (const struct sockaddr *)&uvAddr, UV_UDP_REUSEADDR) < 0) {
         portduinoError("FIXME: implement proper error handling; uv_udp_bind failed");
     }
     if (uv_udp_set_multicast_loop(&_socket, false) < 0) {
