@@ -65,9 +65,20 @@ bool AsyncUDP::listenMulticast(const IPAddress addr, uint16_t port, uint8_t ttl)
     addr_str[maxIpLength] = '\0';
     struct sockaddr uvAddr;
     uv_ip4_addr(addr_str, port, (struct sockaddr_in *)&uvAddr);
-    if (uv_udp_bind(&_socket, (const struct sockaddr *)&uvAddr, 0) < 0) {
+    // We want multiple distinct processes to all be able to join the same multicast mesh.
+
+    // SO_REUSEADDR and SO_REUSEPORT allows multiple instances to loadbalance incoming UDP packets.
+    if (uv_udp_bind(&_socket, (const struct sockaddr *)&uvAddr, UV_UDP_REUSEADDR|UV_UDP_REUSEPORT) < 0) {
         portduinoError("FIXME: implement proper error handling; uv_udp_bind failed");
     }
+    // On Linux, setting SO_BROADCAST has the undocumented side effect to change the loadbalance
+    // behavior into a broadcast where all sockets receive all packets, which we want.
+    // We never want to send packets to the broadcast address, which is the documented behavior.
+    if (uv_udp_set_broadcast(&_socket, true) < 0) {
+        portduinoError("FIXME: implement proper error handling; uv_udp_set_broadcast failed");
+    }
+    // Lastly disable loop, we don't want to receive our own packets, but thankfully Linux implement
+    // this properly and all other processes on the same 2 tuple do receive them.
     if (uv_udp_set_multicast_loop(&_socket, false) < 0) {
         portduinoError("FIXME: implement proper error handling; uv_udp_set_multicast_loop failed");
     }
