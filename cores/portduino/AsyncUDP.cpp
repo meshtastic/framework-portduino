@@ -1,4 +1,6 @@
 #include "AsyncUDP.h"
+#include <unistd.h>
+#include <sys/socket.h>
 #include "Utility.h"
 
 void _asyncudp_async_cb(uv_async_t *handle) {
