@@ -1,3 +1,6 @@
+> [!NOTE] 
+> ***Development of this project is continued at https://github.com/meshtastic/framework-portduino*** 
+
 # Portduino
 
 This is an attempt to port the Arduino API so that it can run on top of Linux (and other desktop operating systems).  This is to facilitate the following use-cases:
