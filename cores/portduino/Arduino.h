@@ -23,7 +23,7 @@ extern HardwareSPI SPI;
 
 using namespace arduino;
 
-typedef HardwareI2C TwoWire; // Some Arduino ports use this terminology
+#define TwoWire LinuxHardwareI2C // Some Arduino ports use this terminology
 
 /** Map a pin number to an interrupt # 
  * We always map 1:1

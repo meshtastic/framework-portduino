@@ -8,6 +8,7 @@
 #include "LinuxHardwareI2C.h"
 #include <iostream>
 #include <linux/i2c.h>
+#include "Arduino.h"
 
 
 extern "C"
@@ -21,7 +22,7 @@ namespace arduino {
     char buf[100] = {0};
     int requestedBytes = 0;
     int sessionstatus;
-    LinuxHardwareI2C Wire;
+    TwoWire Wire;
     bool hasBegun = false;
 
     void LinuxHardwareI2C::begin() {

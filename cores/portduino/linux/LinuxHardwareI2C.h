@@ -7,6 +7,7 @@
 
 #include "HardwareI2C.h"
 #include "Utility.h"
+#include "Arduino.h"
 
 namespace arduino {
 
@@ -63,6 +64,7 @@ public:
   virtual int available();
 
   virtual int read();
+  size_t readBytes( uint8_t *buffer, size_t length) { return readBytes((char *)buffer, length); }
 
   virtual uint8_t readBytes(uint8_t address, size_t len, bool stopBit) {
     notImplemented("requestFrom");
@@ -77,7 +79,6 @@ public:
   }
 };
 
-extern LinuxHardwareI2C Wire;
 } // namespace arduino
-
+extern LinuxHardwareI2C Wire;
 #endif // PORTDUINO_SIMHARDWAREI2C_H
