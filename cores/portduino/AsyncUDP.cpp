@@ -11,6 +11,9 @@ void _asyncudp_async_cb(uv_async_t *handle) {
 AsyncUDP::AsyncUDP() {
     _handler = NULL;
     _connected = false;
+    _fd = 0;
+    _quit.store(false);
+
     uv_loop_init(&_loop);
     _async.data = this;
     uv_async_init(&_loop, &_async, _asyncudp_async_cb);
