@@ -10,10 +10,6 @@
 #include <iostream>
 #include <cstring>
 
-#ifdef USE_X11
-#include <thread>
-#endif
-
 /** # msecs to sleep each loop invocation.  FIXME - make this controlable via
  * config file or command line flags.
  */
@@ -168,12 +164,6 @@ int main(int argc, char *argv[]) {
     gpioInit();
     portduinoSetup();
     setup();
-
-#ifdef USE_X11
-    // create separate thread to handle lvgl X11 GUI simulation
-    extern void tft_task_handler(void *param = nullptr);
-    std::thread* tft_task = new std::thread([] { tft_task_handler(); });
-#endif
 
     while (true) {
       gpioIdle(); // FIXME, do this someplace better
