@@ -303,6 +303,12 @@ void LinuxGPIOPin::setPinMode(PinMode m) {
   }
   else {
     gpiod_line_request_input(line, consumer);
+	auto error = gpiod_line_set_flags(line, m);
+	if (error != 0) {
+		char buf[1024];
+		strcpy(buf, strerror(errno));
+		printf("%d --> %s\n", errno, buf);
+	}
   }
 #else
 	struct gpiod_line_settings *settings;

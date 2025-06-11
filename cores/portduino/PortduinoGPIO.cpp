@@ -7,6 +7,7 @@
 #include "logging.h"
 #include "Arduino.h"
 #include "PortduinoGPIO.h"
+#include "gpiod.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -53,7 +54,13 @@ void pinMode(pin_size_t pinNumber, PinMode pinMode)
 {
   // log(SysGPIO, LogDebug, "pinMode(%d, %d)", pinNumber, pinMode);
   auto p = getGPIO(pinNumber);
-  p->setPinMode(pinMode);
+  // https://forums.raspberrypi.com/viewtopic.php?t=257773
+  // https://docs.arduino.cc/learn/microcontrollers/digital-pins/
+  if (pinMode == INPUT_PULLUP) {
+    p->setPinMode((PinMode)GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP);
+  } else if (pinMode == INPUT_PULLDOWN) {
+    p->setPinMode((PinMode)GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN);
+  }
 }
 
 void digitalWrite(pin_size_t pinNumber, PinStatus status)
