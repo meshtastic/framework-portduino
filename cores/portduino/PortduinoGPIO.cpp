@@ -56,11 +56,15 @@ void pinMode(pin_size_t pinNumber, PinMode pinMode)
   auto p = getGPIO(pinNumber);
   // https://forums.raspberrypi.com/viewtopic.php?t=257773
   // https://docs.arduino.cc/learn/microcontrollers/digital-pins/
+#if defined(GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP)
   if (pinMode == INPUT_PULLUP) {
     p->setPinMode((PinMode)GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP);
   } else if (pinMode == INPUT_PULLDOWN) {
     p->setPinMode((PinMode)GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN);
   }
+#else
+  p->setPinMode(pinMode);
+#endif
 }
 
 void digitalWrite(pin_size_t pinNumber, PinStatus status)
