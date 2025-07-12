@@ -37,6 +37,8 @@ void gpioIdle() {
 }
 
 void gpioBind(GPIOPinIf *p) {
+  if (!(p->getPinNum() < NUM_GPIOS))
+    log(SysGPIO, LogError, "getPinNum %u isn't smaller than max %d", p->getPinNum(), NUM_GPIOS);
   assert(p->getPinNum() < NUM_GPIOS);
   pins[p->getPinNum()].reset(p);
   realHardware = true;
@@ -46,6 +48,8 @@ void gpioBind(GPIOPinIf *p) {
  * Return the specified GPIO pin or the UnboundPin pin instance */
 GPIOPinIf *getGPIO(pin_size_t n)
 {
+  if (!(n < NUM_GPIOS))
+    log(SysGPIO, LogError, "Pin %u isn't smaller than max %d", n, NUM_GPIOS);
   assert(n < NUM_GPIOS);
   return pins[n].get();
 }
