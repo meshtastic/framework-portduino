@@ -29,10 +29,9 @@ void __attribute__((weak)) portduinoSetup() {
 
 void __attribute__((weak)) portduinoCustomInit() {}
 
-// FIXME - move into app client (out of lib) and use real name and version
+// FIXME - move into app client (out of lib) and use real name
 // FIXME - add app specific options as child options
 // http://www.gnu.org/software/libc/manual/html_node/Argp.html
-const char *argp_program_version = "portduino 0.1.0";
 const char *argp_program_bug_address =
     "https://github.com/meshtastic/Meshtastic-device";
 static char doc[] = "An application written with portduino";
