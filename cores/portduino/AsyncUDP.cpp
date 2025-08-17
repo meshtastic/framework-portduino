@@ -63,7 +63,7 @@ bool AsyncUDP::listenMulticast(const IPAddress addr, uint16_t port, uint8_t ttl)
     if (_connected) {
         return false;
     }
-    if (uv_udp_init(&_loop, &_socket) < 0) {
+    if (uv_udp_init(&_, &_socket) < 0) {
         return false;
     }
     _socket.data = this;
@@ -100,9 +100,8 @@ bool AsyncUDP::listenMulticast(const IPAddress addr, uint16_t port, uint8_t ttl)
         _fd = 0;
         return true;
     }
-    // Lastly disable loop, we don't want to receive our own packets, but thankfully Linux implement
-    // this properly and all other processes on the same 2 tuple do receive them.
-    opt = 0;
+    // Have to enable loopback to get multiple processes to inter-communicate
+    opt = 1;
     if (setsockopt(_fd, IPPROTO_IP, IP_MULTICAST_LOOP, &opt, sizeof(opt)) < 0) {
         close(_fd);
         _fd = 0;
