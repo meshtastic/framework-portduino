@@ -63,7 +63,7 @@ bool AsyncUDP::listenMulticast(const IPAddress addr, uint16_t port, uint8_t ttl)
     if (_connected) {
         return false;
     }
-    if (uv_udp_init(&_, &_socket) < 0) {
+    if (uv_udp_init(&_loop, &_socket) < 0) {
         return false;
     }
     _socket.data = this;
