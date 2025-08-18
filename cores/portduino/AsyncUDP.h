@@ -69,6 +69,11 @@ private:
     // the queue is used because uv_udp_send is not threadsafe and uv_async can merge multiple calls into one callback
     std::vector<std::unique_ptr<asyncUDPSendTask>> _sendQueue;
 
+    // _waitingToBeLooped is used to wait for a sent packet to be looped back before we send an other one.
+    // This allows the recv callback to omit sent packets.
+    // It must be accessed from the uv loop.
+    std::unique_ptr<asyncUDPSendTask> _waitingToBeLooped;
+
     std::atomic<bool> _quit;
     std::thread _ioThread;
 
@@ -109,6 +114,9 @@ public:
     void _DO_NOT_CALL_async_cb();
 
 private:
+    // _attemptWrite must be accessed from the uv loop.
+    void _attemptWrite();
+    // _doWrite must be accessed from the uv loop.
     void _doWrite(const uint8_t *data, size_t len, const IPAddress addr, uint16_t port);
 };
 

@@ -49,12 +49,20 @@ void _asyncudp_on_read_cb(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, 
 }
 
 void AsyncUDP::_DO_NOT_CALL_uv_on_read(uv_udp_t *handle, ssize_t nread, const uv_buf_t *buf, const struct sockaddr *addr, unsigned flags) {
+    if (nread <= 0) {
+        return;
+    }
     _handlerMutex.lock();
     auto h = _handler;
     _handlerMutex.unlock();
-    if (h) {
-        AsyncUDPPacket packet((uint8_t*)buf->base, nread);
-        h(packet);
+    if (_waitingToBeLooped && nread == _waitingToBeLooped->len && memcmp(buf->base, _waitingToBeLooped->data, nread) == 0) {
+        _waitingToBeLooped = std::unique_ptr<asyncUDPSendTask>();
+        _attemptWrite();
+    } else {
+        if (h) {
+            AsyncUDPPacket packet((uint8_t*)buf->base, nread);
+            h(packet);
+        }
     }
     free(buf->base);
 }
@@ -156,16 +164,24 @@ size_t AsyncUDP::writeTo(const uint8_t *data, size_t len, const IPAddress addr, 
     return len;
 }
 
-void AsyncUDP::_DO_NOT_CALL_async_cb() {
+void AsyncUDP::_attemptWrite() {
+    if (_waitingToBeLooped) {
+        return;
+    }
     _sendQueueMutex.lock();
-    while (!_sendQueue.empty()) {
+    if (!_sendQueue.empty()) {
         auto task = std::move(_sendQueue.back());
         _sendQueue.pop_back();
         _sendQueueMutex.unlock();
         _doWrite(task->data, task->len, task->addr, task->port);
         _sendQueueMutex.lock();
+        _waitingToBeLooped = std::move(task);
     }
     _sendQueueMutex.unlock();
+}
+
+void AsyncUDP::_DO_NOT_CALL_async_cb() {
+    _attemptWrite();
     if (_quit.load()) {
         uv_udp_recv_stop(&_socket);
         // FIXME: don't do bytes → string → bytes IP conversion
