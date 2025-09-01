@@ -49,7 +49,7 @@ namespace arduino {
         requestedBytes = 0;
     }
     uint8_t LinuxHardwareI2C::endTransmission(bool stopBit) {
-        if (requestedBytes) {
+        if (stopBit && requestedBytes) {
             int resp = ::write(i2c_file, TXbuf, requestedBytes);
             bool success = resp == requestedBytes;
             requestedBytes = 0;
@@ -118,12 +118,44 @@ namespace arduino {
     }
 
     uint8_t LinuxHardwareI2C::requestFrom(uint8_t address, size_t count, bool stop) {
-        ioctl(i2c_file, I2C_SLAVE, address);
-        RXlen  = ::read(i2c_file, RXbuf, count);
-        if (RXlen < 1) {
-            RXlen = 0;
+        // https://stackoverflow.com/questions/505023/reading-writing-from-using-i2c-on-linux
+        // Need to do a combined write-read for some devices, so delay the write til then
+        if (requestedBytes) {
+            struct i2c_msg rdwr_msgs[2] = {
+                {  // Start address
+                .addr = address,
+                .flags = 0, // write
+                .len = requestedBytes,
+                .buf = (unsigned char *) TXbuf
+                },
+                { // Read buffer
+                .addr = address,
+                .flags = I2C_M_RD, // read
+                .len = count,
+                .buf = (unsigned char *)RXbuf
+                }
+            };
+
+            struct i2c_rdwr_ioctl_data rdwr_data = {
+                .msgs = rdwr_msgs,
+                .nmsgs = 2
+            };
+
+            int result = ioctl( i2c_file, I2C_RDWR, &rdwr_data );
+            if (result >= 0) {
+                RXlen = count;
+                return count;
+            } else {
+                return result;
+            }
+        } else {
+            ioctl(i2c_file, I2C_SLAVE, address);
+            RXlen  = ::read(i2c_file, RXbuf, count);
+            if (RXlen < 1) {
+                RXlen = 0;
+            }
+            RXindex = 0;
+            return RXlen;
         }
-        RXindex = 0;
-        return RXlen;
     }
 }
