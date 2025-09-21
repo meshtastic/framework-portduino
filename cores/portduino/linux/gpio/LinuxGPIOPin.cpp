@@ -300,14 +300,23 @@ void LinuxGPIOPin::setPinMode(PinMode m) {
   // Set direction, if output use the current pinstate as the output value
   if (m == OUTPUT) {
     gpiod_line_request_output(line, consumer, readPin());
-  }
-  else {
+  } else {
     gpiod_line_request_input(line, consumer);
-	auto error = gpiod_line_set_flags(line, m);
-	if (error != 0) {
-		char buf[1024];
-		strcpy(buf, strerror(errno));
-		printf("%d --> %s\n", errno, buf);
+
+	if (m == INPUT_PULLUP) {
+		auto error = gpiod_line_set_flags(line, GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP);
+		if (error != 0) {
+			char buf[1024];
+			strcpy(buf, strerror(errno));
+			printf("%d --> %s\n", errno, buf);
+		}
+	} else if (m == INPUT_PULLDOWN) {
+		auto error = gpiod_line_set_flags(line, GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP);
+		if (error != 0) {
+			char buf[1024];
+			strcpy(buf, strerror(errno));
+			printf("%d --> %s\n", errno, buf);
+		}
 	}
   }
 #else

@@ -9,14 +9,6 @@
 #include "PortduinoGPIO.h"
 #include "gpiod.h"
 
-#ifndef GPIOD_LINE_BULK_MAX_LINES
-#define GPIOD_V 2
-#define GPIOD_LINE_REQUEST_DIRECTION_AS_IS GPIOD_LINE_DIRECTION_AS_IS
-#define gpiod_line gpiod_line_request
-#else
-#define GPIOD_V 1
-#endif
-
 #include <assert.h>
 #include <stdlib.h>
 #include <vector>
@@ -68,15 +60,7 @@ void pinMode(pin_size_t pinNumber, PinMode pinMode)
   auto p = getGPIO(pinNumber);
   // https://forums.raspberrypi.com/viewtopic.php?t=257773
   // https://docs.arduino.cc/learn/microcontrollers/digital-pins/
-#if GPIOD_V == 1
-  if (pinMode == INPUT_PULLUP) {
-    p->setPinMode((PinMode)GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP);
-  } else if (pinMode == INPUT_PULLDOWN) {
-    p->setPinMode((PinMode)GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN);
-  }
-#else
   p->setPinMode(pinMode);
-#endif
 }
 
 void digitalWrite(pin_size_t pinNumber, PinStatus status)
