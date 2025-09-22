@@ -311,7 +311,7 @@ void LinuxGPIOPin::setPinMode(PinMode m) {
 			printf("%d --> %s\n", errno, buf);
 		}
 	} else if (m == INPUT_PULLDOWN) {
-		auto error = gpiod_line_set_flags(line, GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_UP);
+		auto error = gpiod_line_set_flags(line, GPIOD_LINE_REQUEST_FLAG_BIAS_PULL_DOWN);
 		if (error != 0) {
 			char buf[1024];
 			strcpy(buf, strerror(errno));
