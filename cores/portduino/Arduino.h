@@ -23,6 +23,11 @@ extern HardwareSPI SPI;
 
 using namespace arduino;
 
+struct portduinoOptions {
+    // char *fileSystemPath = nullptr;
+    bool realHardware = false;
+};
+
 typedef HardwareI2C TwoWire; // Some Arduino ports use this terminology
 
 /** Map a pin number to an interrupt # 
@@ -46,6 +51,11 @@ extern void portduinoCustomInit();
  * call from portuinoCustomInit() if you want to add custom command line arguments
  */
 void portduinoAddArguments(const struct argp_child &child, void *childArguments);
+
+/**
+ * This allows adding some custom options to how portduino operates.
+ */
+void portduinoSetOptions(portduinoOptions);
 
 /**
  * write a 6 byte 'macaddr'/unique ID to the dmac parameter

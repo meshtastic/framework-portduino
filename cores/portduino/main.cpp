@@ -108,6 +108,10 @@ void portduinoAddArguments(const struct argp_child &child,
   childArguments = _childArguments;
 }
 
+void portduinoSetOptions(portduinoOptions options) {
+  realHardware = options.realHardware;
+}
+
 void reboot() {
   int err = execv(progArgv[0], progArgv);
   printf("execv() returned %i!\n", err);
