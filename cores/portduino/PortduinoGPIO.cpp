@@ -7,7 +7,11 @@
 #include "logging.h"
 #include "Arduino.h"
 #include "PortduinoGPIO.h"
+// gpiod.h is Linux-only and not used by this base file; the actual libgpiod
+// usage lives in linux/gpio/LinuxGPIOPin.cpp (gated by PORTDUINO_LINUX_HARDWARE).
+#ifdef PORTDUINO_LINUX_HARDWARE
 #include "gpiod.h"
+#endif
 
 #include <assert.h>
 #include <stdlib.h>

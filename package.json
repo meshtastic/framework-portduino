@@ -2,6 +2,6 @@
   "description": "Portduino framework",
   "name": "framework-portduino",
   "system": "*",
-  "url": "https://github.com/geeksville/framework-portduino",
+  "url": "https://github.com/meshtastic/framework-portduino",
   "version": "0.0.1"
 }

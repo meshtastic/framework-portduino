@@ -1,4 +1,5 @@
 #include "AsyncUDP.h"
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/socket.h>
 #include "Utility.h"
@@ -92,7 +93,18 @@ bool AsyncUDP::listenMulticast(const IPAddress addr, uint16_t port, uint8_t ttl)
     }
     _socket.data = this;
 
+#if defined(SOCK_NONBLOCK) && defined(SOCK_CLOEXEC)
     _fd = socket(AF_INET, SOCK_DGRAM|SOCK_NONBLOCK|SOCK_CLOEXEC, 0);
+#else
+    // BSD/Darwin: no SOCK_* flags param, set non-blocking + cloexec via fcntl.
+    _fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (_fd >= 0) {
+        int flags = fcntl(_fd, F_GETFL, 0);
+        if (flags != -1) fcntl(_fd, F_SETFL, flags | O_NONBLOCK);
+        int fdflags = fcntl(_fd, F_GETFD, 0);
+        if (fdflags != -1) fcntl(_fd, F_SETFD, fdflags | FD_CLOEXEC);
+    }
+#endif
     if (_fd < 0) {
         return false;
     }

@@ -79,7 +79,11 @@ typedef uint16_t  word;
 void init(void);
 void initVariant(void);
 
-#ifndef __unix
+// __unix__ is defined by GCC on Linux/BSDs but NOT by Apple Clang on macOS,
+// even though macOS is itself a Unix. Without the __APPLE__ guard the weak
+// `int main()` here clashes with main.cpp's `int main(int, char**)` under
+// Apple Clang's strict overload-of-`main` checking.
+#if !defined(__unix) && !defined(__APPLE__)
 int atexit(void (*func)()) __attribute__((weak));
 int main() __attribute__((weak));
 #endif
