@@ -1,11 +1,14 @@
 //
 // Created by kevinh on 9/1/20.
 //
+#include "LinuxHardwareI2C.h"
+
+#ifdef __linux__
+
 #include <unistd.h>
 #include <fcntl.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
-#include "LinuxHardwareI2C.h"
 #include <iostream>
 #include <linux/i2c.h>
 
@@ -159,3 +162,36 @@ namespace arduino {
         }
     }
 }
+
+#else // !__linux__ — non-Linux POSIX hosts (e.g. macOS / Darwin)
+//
+// On non-Linux hosts the kernel I2C userspace API (linux/i2c-dev.h, i2c/smbus.h,
+// i2c_rdwr_ioctl_data) is unavailable. Provide a stub implementation that
+// satisfies the symbol contract declared in LinuxHardwareI2C.h so consumers can
+// link, but every operation is a no-op / NAK. Real I2C traffic on these hosts
+// is expected to go through a USB bridge (e.g. CH341) at a higher layer.
+//
+
+namespace arduino {
+    LinuxHardwareI2C Wire;
+
+    void LinuxHardwareI2C::begin() {}
+    void LinuxHardwareI2C::begin(const char * /*device*/) {}
+    void LinuxHardwareI2C::end() {}
+
+    void LinuxHardwareI2C::beginTransmission(uint8_t /*address*/) {}
+    uint8_t LinuxHardwareI2C::endTransmission(bool /*stopBit*/) { return 4; /* I2cOtherError */ }
+
+    int LinuxHardwareI2C::writeQuick(uint8_t /*toWrite*/) { return -1; }
+
+    size_t LinuxHardwareI2C::write(uint8_t /*toWrite*/) { return 0; }
+    size_t LinuxHardwareI2C::write(const uint8_t * /*buffer*/, size_t /*size*/) { return 0; }
+
+    int LinuxHardwareI2C::read() { return -1; }
+    size_t LinuxHardwareI2C::readBytes(char * /*buffer*/, size_t /*length*/) { return 0; }
+    int LinuxHardwareI2C::available() { return 0; }
+
+    uint8_t LinuxHardwareI2C::requestFrom(uint8_t /*address*/, size_t /*count*/, bool /*stop*/) { return 0; }
+}
+
+#endif // __linux__

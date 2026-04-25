@@ -17,7 +17,6 @@
 #include "HardwareSPI.h"
 #include "linux/LinuxSerial.h"
 #include "linux/LinuxHardwareI2C.h"
-#include <argp.h>
 
 extern HardwareSPI SPI;
 
