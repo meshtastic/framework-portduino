@@ -397,7 +397,7 @@ FileImplPtr VFSFileImpl::openNextFile(const char* mode)
     if(file == NULL) {
         return FileImplPtr();
     }
-    if(file->d_type != DT_REG && file->d_type != DT_DIR) {
+    if(file->d_type != DT_REG && file->d_type != DT_DIR && file->d_type != DT_LNK) {
         return openNextFile(mode);
     }
     String fname = String(file->d_name);
