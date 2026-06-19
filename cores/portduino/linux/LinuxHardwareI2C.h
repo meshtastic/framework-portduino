@@ -12,11 +12,11 @@ namespace arduino {
 
 // result codes for endTransmission per Arduino docs
 enum ResultI2c {
-  I2cSuccess = 0,
-  I2cTooLong,
-  I2cAddrNAK,
-  I2cDataNAK,
-  I2cOtherError
+  PORTDUINO_I2cSuccess = 0,
+  PORTDUINO_I2cTooLong,
+  PORTDUINO_I2cAddrNAK,
+  PORTDUINO_I2cDataNAK,
+  PORTDUINO_I2cOtherError
 };
 
 class LinuxHardwareI2C : public HardwareI2C {
