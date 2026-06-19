@@ -73,7 +73,7 @@ namespace arduino {
     size_t LinuxHardwareI2C::write(uint8_t toWrite) {
         TXbuf[requestedBytes] = toWrite;
         requestedBytes++;
-        return 0;
+        return 1;
     }
     size_t LinuxHardwareI2C::write(const uint8_t *buffer, size_t size) {
         for (int i = 0; i < size; i++) {
