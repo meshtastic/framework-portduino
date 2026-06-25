@@ -169,7 +169,11 @@ bool AsyncUDP::listenMulticast(const IPAddress addr, uint16_t port, uint8_t ttl)
     // host when the socket is bound to the group address, so bind to INADDR_ANY:port there
     // instead. The uv_udp_set_membership() join above still filters received traffic.
 #if defined(__APPLE__)
-    uv_ip4_addr("0.0.0.0", port, (struct sockaddr_in *)&uvAddr);
+    if (uv_ip4_addr("0.0.0.0", port, (struct sockaddr_in *)&uvAddr) < 0) {
+        close(_fd);
+        _fd = 0;
+        return true;
+    }
 #endif
     if (uv_udp_bind(&_socket, (const struct sockaddr *)&uvAddr, 0) < 0) {
         close(_fd);
