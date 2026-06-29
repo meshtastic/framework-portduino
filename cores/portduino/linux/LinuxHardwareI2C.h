@@ -20,7 +20,7 @@ enum ResultI2c {
 };
 
 class LinuxHardwareI2C : public HardwareI2C {
-  int i2c_file = 0;
+  int i2c_file = -1; // unopened: fail fast instead of operating on stdin/stdout
 
 public:
   void begin(const char* device);
