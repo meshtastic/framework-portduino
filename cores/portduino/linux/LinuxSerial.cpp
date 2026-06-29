@@ -186,13 +186,26 @@ namespace arduino {
     }
 
     int LinuxSerial::peek(void) {
+        if (hasPeeked) return peekedByte;
+        unsigned char c = 0;
+        ssize_t rv = ::read(serial_port, &c, 1);
+        if (rv == 1) {
+            hasPeeked = true;
+            peekedByte = (int)c;
+            return peekedByte;
+        }
         return -1;
     }
 
     int LinuxSerial::read(void) {
-        int buf = 0;
-        ::read(serial_port, &buf, 1);
-        return buf;
+        if (hasPeeked) {
+            hasPeeked = false;
+            return peekedByte;
+        }
+        unsigned char c = 0;
+        ssize_t rv = ::read(serial_port, &c, 1);
+        if (rv == 1) return (int)c;
+        return -1;
     }
 
     void LinuxSerial::flush(void) {
