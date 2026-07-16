@@ -3,19 +3,49 @@
 //
 
 #include "LinuxSerial.h"
+#include <string>
+
+#include <stdio.h>
+
+// LinuxSerial drives a real UART through POSIX termios, which Windows has no
+// equivalent for (it would need the CreateFile/DCB/COMMTIMEOUTS API). SimSerial,
+// the console log sink the headless builds use, is portable and stays common.
+// On Windows LinuxSerial is stubbed so arduino::Serial1 still links; it just
+// reports "not connected" via operator bool().
+#ifndef _WIN32
+
 #include <fcntl.h> // Contains file controls like O_RDWR
 #include <errno.h> // Error integer and strerror() function
 #include <termios.h> // Contains POSIX terminal control definitions
 #include <unistd.h> // write(), read(), close()
-#include <string>
 #include <sys/ioctl.h>
 
-#include <stdio.h>
-
 struct termios tty;
+#endif // !_WIN32
+
 namespace arduino {
     LinuxSerial Serial1;
     SimSerial Serial;
+
+#ifdef _WIN32
+    // serial_port stays -1, so operator bool() reports the port as unusable.
+    void LinuxSerial::begin(unsigned long baudrate, uint16_t config) {}
+
+    int LinuxSerial::setPath(std::string serialPath) {
+        if (serialPath != "")
+            path = serialPath;
+        return 0;
+    }
+
+    void LinuxSerial::end() {}
+    int LinuxSerial::available(void) { return 0; }
+    int LinuxSerial::peek(void) { return -1; }
+    int LinuxSerial::read(void) { return -1; }
+    void LinuxSerial::flush(void) {}
+    size_t LinuxSerial::write(uint8_t c) { return 0; }
+    LinuxSerial::operator bool() { return false; }
+
+#else // !_WIN32
     // https://blog.mbedded.ninja/programming/operating-systems/linux/linux-serial-ports-using-c-cpp/
 
     void LinuxSerial::begin(unsigned long baudrate, uint16_t config) {
@@ -208,7 +238,7 @@ namespace arduino {
         return serial_port != -1;
     }
 
-
+#endif // !_WIN32
 
     //simulated serial for log output:
     void SimSerial::begin(unsigned long baudrate, uint16_t config) {

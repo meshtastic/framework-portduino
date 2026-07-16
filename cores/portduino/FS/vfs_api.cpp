@@ -15,9 +15,47 @@
 #include "vfs_api.h"
 #include "logging.h"
 
-#ifndef ACCESSPERMS
-#define ACCESSPERMS (S_IRWXU|S_IRWXG|S_IRWXO) 
+#ifdef _WIN32
+#include <io.h>      // _commit(), _fileno()
+#include <windows.h> // MoveFileExA()
 #endif
+
+#ifndef ACCESSPERMS
+#ifdef _WIN32
+// Windows has no POSIX group/other permission bits, and the mode is ignored by
+// the single-argument mkdir below anyway.
+#define ACCESSPERMS 0
+#else
+#define ACCESSPERMS (S_IRWXU|S_IRWXG|S_IRWXO)
+#endif
+#endif
+
+// MinGW's <sys/stat.h> declares only the single-argument mkdir(const char *).
+#ifdef _WIN32
+#define portduino_mkdir(path, mode) ::mkdir(path)
+#else
+#define portduino_mkdir(path, mode) ::mkdir(path, mode)
+#endif
+
+namespace {
+// The Arduino FS API has no text mode; every target treats file I/O as raw
+// bytes. The Windows CRT does not: fopen("w") without a "b" translates \n to
+// \r\n and back, silently corrupting the protobufs the firmware stores. Force
+// binary mode so Windows matches every other host.
+const char *vfsBinaryMode(const char *mode, char *buf, size_t bufLen)
+{
+#ifdef _WIN32
+    if (!mode || strchr(mode, 'b'))
+        return mode;
+    snprintf(buf, bufLen, "%sb", mode);
+    return buf;
+#else
+    (void)buf;
+    (void)bufLen;
+    return mode;
+#endif
+}
+} // namespace
 
 using namespace fs;
 
@@ -114,7 +152,15 @@ bool VFSImpl::rename(const char* pathFrom, const char* pathTo)
     }
     sprintf(temp1,"%s%s", _mountpoint, pathFrom);
     sprintf(temp2,"%s%s", _mountpoint, pathTo);
+#ifdef _WIN32
+    // POSIX rename() replaces an existing destination; the Windows CRT's fails
+    // with EEXIST. Callers rely on the POSIX behaviour: the firmware's SafeFile
+    // renames a .tmp over the live prefs file precisely because that swap is
+    // atomic, so use MoveFileEx rather than remove()-then-rename().
+    auto rc = MoveFileExA(temp1, temp2, MOVEFILE_REPLACE_EXISTING) ? 0 : -1;
+#else
     auto rc = ::rename(temp1, temp2);
+#endif
     free(temp1);
     free(temp2);
     return rc == 0;
@@ -177,7 +223,7 @@ bool VFSImpl::mkdir(const char *path)
         return false;
     }
     sprintf(temp,"%s%s", _mountpoint, path);
-    auto rc = ::mkdir(temp, ACCESSPERMS);
+    auto rc = portduino_mkdir(temp, ACCESSPERMS);
     free(temp);
     return rc == 0;
 }
@@ -233,6 +279,9 @@ VFSFileImpl::VFSFileImpl(VFSImpl* fs, const char* path, const char* mode)
         free(temp);
         return;
     }
+
+    char modeBuf[8];
+    mode = vfsBinaryMode(mode, modeBuf, sizeof(modeBuf));
 
     if(!stat(temp, &_stat)) {
         //file found
@@ -346,7 +395,12 @@ void VFSFileImpl::flush()
     }
     fflush(_f);
     // workaround for https://github.com/espressif/arduino-esp32/issues/1293
+#ifdef _WIN32
+    // The CRT spells fsync() as _commit(), taking the same underlying fd.
+    _commit(_fileno(_f));
+#else
     fsync(fileno(_f));
+#endif
 }
 
 bool VFSFileImpl::seek(uint32_t pos, SeekMode mode)
@@ -397,9 +451,14 @@ FileImplPtr VFSFileImpl::openNextFile(const char* mode)
     if(file == NULL) {
         return FileImplPtr();
     }
+#ifndef _WIN32
+    // Skip entries that aren't a regular file, directory, or symlink. MinGW's
+    // <dirent.h> has no d_type, and Windows directories only contain files,
+    // directories and reparse points, so there is nothing to exclude there.
     if(file->d_type != DT_REG && file->d_type != DT_DIR && file->d_type != DT_LNK) {
         return openNextFile(mode);
     }
+#endif
     String fname = String(file->d_name);
     String name = String(_path);
     if(!fname.startsWith("/") && !name.endsWith("/")) {

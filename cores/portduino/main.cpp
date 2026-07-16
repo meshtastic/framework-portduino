@@ -3,12 +3,27 @@
 #include "PortduinoGPIO.h"
 #include <argp.h>
 #include <stdio.h>
-#include <ftw.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
 #include <cerrno>
 #include <iostream>
 #include <cstring>
+
+#ifdef _WIN32
+// No <ftw.h> on Windows; _mkdir()/_execv() come from the CRT headers below.
+#include <direct.h>
+#include <process.h>
+#include <filesystem>
+#include <sys/stat.h>
+#else
+#include <ftw.h>
+#include <sys/stat.h>
+#endif
+
+// Windows has no POSIX permission bits, so _mkdir() takes no mode.
+#ifdef _WIN32
+#define portduino_mkdir(path, mode) _mkdir(path)
+#else
+#define portduino_mkdir(path, mode) mkdir(path, mode)
+#endif
 
 /** # msecs to sleep each loop invocation.  FIXME - make this controlable via
  * config file or command line flags.
@@ -77,11 +92,32 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 
 /*
  * Functions to remove contents of directory
- * Adapted from: https://stackoverflow.com/a/5467788 
- */ 
+ * Adapted from: https://stackoverflow.com/a/5467788
+ */
+#ifdef _WIN32
+// No nftw() on Windows. Deleting each entry under the root rather than the root
+// itself matches the POSIX path's `0 < ftwbuf->level` test.
+int rmrf(char *path)
+{
+    std::error_code ec;
+    for (const auto &entry : std::filesystem::directory_iterator(path, ec)) {
+        std::error_code rmEc;
+        std::filesystem::remove_all(entry.path(), rmEc);
+        if (rmEc) {
+            fprintf(stderr, "%s: %s\n", entry.path().string().c_str(), rmEc.message().c_str());
+            return -1;
+        }
+    }
+    if (ec) {
+        fprintf(stderr, "%s: %s\n", path, ec.message().c_str());
+        return -1;
+    }
+    return 0;
+}
+#else
 int unlink_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
 {
-    int rv = 0; 
+    int rv = 0;
     if (0 < ftwbuf->level)
       rv = remove(fpath);
     if (rv)
@@ -94,6 +130,7 @@ int rmrf(char *path)
 {
     return nftw(path, unlink_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
+#endif // _WIN32
 
 static struct argp argp = {options, parse_opt, args_doc, doc, children, 0, 0};
 
@@ -113,8 +150,15 @@ void portduinoSetOptions(portduinoOptions options) {
 }
 
 void reboot() {
+#ifdef _WIN32
+  // _execv() spawns a replacement and terminates this process rather than
+  // replacing the image in place, but the effect is the same restart.
+  int err = _execv(progArgv[0], progArgv);
+  printf("_execv() returned %i!\n", err);
+#else
   int err = execv(progArgv[0], progArgv);
   printf("execv() returned %i!\n", err);
+#endif
   std::cout << "error: " << std::strerror(errno) << '\n';
   exit(EXIT_FAILURE);
 }
@@ -143,10 +187,15 @@ int main(int argc, char *argv[]) {
       // create a default dir
 
       const char *homeDir = getenv("HOME");
+#ifdef _WIN32
+      // Windows doesn't set $HOME outside of MSYS/Cygwin shells.
+      if (!homeDir)
+        homeDir = getenv("USERPROFILE");
+#endif
       assert(homeDir);
 
       fsRoot += homeDir + String("/.portduino");
-      mkdir(fsRoot.c_str(), 0700);
+      portduino_mkdir(fsRoot.c_str(), 0700);
 
       const char *instanceName = "default";
       fsRoot += "/" + String(instanceName);
@@ -155,7 +204,7 @@ int main(int argc, char *argv[]) {
 
     printf("Portduino is starting, VFS root at %s\n", fsRoot.c_str());
 
-    int status = mkdir(fsRoot.c_str(), 0700);
+    int status = portduino_mkdir(fsRoot.c_str(), 0700);
     if (status != 0 && errno == EEXIST && args->erase) {
       // Remove contents of existing VFS root directory
       std::cout << "Erasing virtual Filesystem!" << std::endl;

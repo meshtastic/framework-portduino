@@ -26,6 +26,22 @@ void delayMicroseconds(unsigned int usec) {
 
 void yield(void) { sched_yield(); }
 
+#ifdef _WIN32
+// libc's random(3) doesn't exist on Windows. Compose several rand() draws rather
+// than forwarding to it directly: glibc's random() yields 31 bits while the
+// Windows CRT's RAND_MAX is 0x7FFF (15 bits), and callers assume the wider range
+// (apps draw nonces from this). Staying on rand() keeps the seeding contract
+// identical to the Linux build, where randomSeed() calls srand() and glibc's
+// srand() and srandom() are the same function.
+long random(void)
+{
+    unsigned long v = (unsigned long)rand();
+    v = (v << 15) ^ (unsigned long)rand();
+    v = (v << 15) ^ (unsigned long)rand();
+    return (long)(v & 0x7FFFFFFFUL);
+}
+#endif
+
 long random(long max) { return random(0, max); }
 
 long random(long min, long max) { 

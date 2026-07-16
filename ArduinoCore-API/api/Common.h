@@ -83,7 +83,10 @@ void initVariant(void);
 // even though macOS is itself a Unix. Without the __APPLE__ guard the weak
 // `int main()` here clashes with main.cpp's `int main(int, char**)` under
 // Apple Clang's strict overload-of-`main` checking.
-#if !defined(__unix) && !defined(__APPLE__)
+// _WIN32 is excluded for the same reason: MinGW-w64 defines neither __unix nor
+// __APPLE__, so these would be declared, and `extern "C" int main()` then
+// conflicts with main.cpp's `int main(int, char**)`.
+#if !defined(__unix) && !defined(__APPLE__) && !defined(_WIN32)
 int atexit(void (*func)()) __attribute__((weak));
 int main() __attribute__((weak));
 #endif
