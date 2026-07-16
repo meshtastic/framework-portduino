@@ -1,3 +1,9 @@
+// Talks BSD sockets directly rather than going through libuv's UDP API, so it
+// doesn't build against Winsock. Nothing links it on Windows: the only consumer
+// is the firmware's UdpMulticastHandler, gated behind HAS_UDP_MULTICAST, which
+// neither the Windows nor macOS build sets.
+#ifndef _WIN32
+
 #include "AsyncUDP.h"
 #include <fcntl.h>
 #include <unistd.h>
@@ -275,3 +281,5 @@ void AsyncUDP::_doWrite(const uint8_t *data, size_t len, const IPAddress addr, u
         // FIXME: I don't know how to handle this error, better to just drop the packet.
     }
 }
+
+#endif // !_WIN32

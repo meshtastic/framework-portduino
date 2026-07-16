@@ -7,6 +7,42 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#ifdef _WIN32
+#include <cstdlib>
+#include <cstring>
+
+// Declared in Arduino.h.
+
+// Returns the length of src so callers can detect truncation, and always
+// NUL-terminates when size > 0, matching the BSD contract.
+extern "C" size_t strlcpy(char *dst, const char *src, size_t size)
+{
+    size_t len = strlen(src);
+    if (size > 0) {
+        size_t copy = len < size - 1 ? len : size - 1;
+        memcpy(dst, src, copy);
+        dst[copy] = '\0';
+    }
+    return len;
+}
+
+// _putenv_s always overwrites, so honour `overwrite == 0` explicitly.
+extern "C" int setenv(const char *name, const char *value, int overwrite)
+{
+    if (!overwrite && getenv(name))
+        return 0;
+    return _putenv_s(name, value) == 0 ? 0 : -1;
+}
+
+// strcpy() returning a pointer to dst's terminating NUL rather than its start.
+extern "C" char *stpcpy(char *dst, const char *src)
+{
+    size_t len = strlen(src);
+    memcpy(dst, src, len + 1);
+    return dst + len;
+}
+#endif // _WIN32
+
 void notImplemented(const char *msg) { printf("%s is not implemented\n", msg); }
 
 void portduinoError(const char *msg, ...) {
