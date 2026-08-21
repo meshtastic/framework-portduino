@@ -36,12 +36,14 @@ namespace arduino {
     void LinuxHardwareI2C::begin(const char * device) {
         if (!hasBegun) {
             i2c_file = open(device, O_RDWR);
-            hasBegun = true;
+            if (i2c_file >= 0)
+                hasBegun = true;
         }
     }
     void LinuxHardwareI2C::end() {
         if (hasBegun) {
             close(i2c_file);
+            i2c_file = -1;
             hasBegun = false;
         }
     }
