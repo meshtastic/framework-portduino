@@ -8,6 +8,7 @@
 #include "logging.h"
 
 #include <assert.h>
+#include <map>
 
 #ifdef PORTDUINO_LINUX_HARDWARE
 
@@ -185,3 +186,21 @@ void HardwareSPI::end() {
 } // namespace arduino
 
 HardwareSPI SPI;
+
+namespace arduino {
+HardwareSPI *HardwareSPI::getInstance(int8_t spi_host) {
+  if (spi_host < 0)
+    return nullptr;
+  if (spi_host == 0)
+    return &::SPI;
+
+  static std::map<int8_t, HardwareSPI *> instances;
+  auto found = instances.find(spi_host);
+  if (found != instances.end())
+    return found->second;
+
+  HardwareSPI *instance = new HardwareSPI(spi_host);
+  instances[spi_host] = instance;
+  return instance;
+}
+} // namespace arduino

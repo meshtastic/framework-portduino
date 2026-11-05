@@ -108,6 +108,10 @@ class HardwareSPI
 {
   public:
     HardwareSPI (int8_t _spi_host = 0);
+
+    // The instance for a host byte, creating it on first use. Host 0 is the
+    // global SPI object; other hosts get their own /dev/spidev<bus>.<device>.
+    static HardwareSPI *getInstance(int8_t spi_host);
     virtual uint8_t transfer(uint8_t data);
     virtual uint16_t transfer16(uint16_t data);
     virtual void transfer(void *buf, size_t count);
