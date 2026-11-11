@@ -206,10 +206,3 @@ HardwareSPI *HardwareSPI::getInstance(int8_t spi_host) {
   return result;
 }
 } // namespace arduino
-
-// Optional hook for LovyanGFX's arduino_default backend. It is referenced there
-// as a weak symbol, so platforms that do not provide it keep the default SPI.
-extern "C" arduino::SPIClass *lgfx_get_spi_instance(int spi_host)
-{
-  return arduino::HardwareSPI::getInstance((int8_t)spi_host);
-}

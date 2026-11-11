@@ -111,6 +111,8 @@ class HardwareSPI
 
     // The instance for a host byte, creating it on first use. Host 0 is the
     // global SPI object; other hosts get their own /dev/spidev<bus>.<device>.
+    // The instance is not begun: the caller opens it with begin(). Negative
+    // hosts return nullptr.
     static HardwareSPI *getInstance(int8_t spi_host);
     virtual uint8_t transfer(uint8_t data);
     virtual uint16_t transfer16(uint16_t data);
