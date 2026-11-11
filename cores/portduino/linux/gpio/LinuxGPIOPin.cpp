@@ -267,8 +267,11 @@ LinuxGPIOPin::LinuxGPIOPin(pin_size_t n, const char *chipLabel,
 }
 
 LinuxGPIOPin::~LinuxGPIOPin() { 
-    gpiod_line_release(line); 
+    gpiod_line_release(line);
+#if GPIOD_V == 1
+    // v2 getLine() already closed the chip once the line was requested
     gpiod_chip_close(chip);
+#endif
 }
 
 /// Read the low level hardware for this pin

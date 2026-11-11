@@ -251,7 +251,9 @@ bool VFSImpl::rmdir(const char *path)
         return false;
     }
     sprintf(temp,"%s%s", _mountpoint, path);
-    auto rc = unlink(temp);
+    // unlink() cannot remove a directory (EISDIR on Linux, EACCES on Windows), so this always
+    // failed. Qualified: an unqualified rmdir() would resolve to this member and recurse.
+    auto rc = ::rmdir(temp);
     free(temp);
     return rc == 0;
 }
